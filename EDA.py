@@ -130,85 +130,49 @@ for sensor in sensors:
 # DATA PREPROCESSING
 # ==============================
 
-# Select one node
-node = "MESH_A02"
 
-node_df = df[df["node_id"] == node].copy()
+def forecast_node(node):
+    """Create a TimesFM forecast for one node using its own crack displacement history."""
+    node_df = df[df["node_id"] == node].copy()
+    if node_df.empty:
+        return None
 
-# Sort by time
-node_df = node_df.sort_values("timestamp")
+    node_df = node_df.sort_values("timestamp")
+    node_df = node_df[["timestamp", "crack_disp_mm"]].copy()
+    node_df = node_df.set_index("timestamp")
+    node_15min = node_df.resample("15min").mean()
 
-# Keep required columns
-node_df = node_df[
-    ["timestamp", "crack_disp_mm"]
-]
+    if node_15min.empty:
+        return None
 
-# Make timestamp the index
-node_df = node_df.set_index("timestamp")
+    node_15min["crack_disp_mm"] = (
+        node_15min["crack_disp_mm"].interpolate(method="linear")
+    )
 
-# Resample to 15-minute intervals
-node_15min = node_df.resample("15min").mean()
+    valid_y = node_15min["crack_disp_mm"].dropna()
+    if len(valid_y) < 3:
+        return None
 
-print("\n--- Resampled data ---")
-print(node_15min)
+    timesfm_df = node_15min.reset_index()
+    timesfm_df["unique_id"] = node
+    timesfm_df = timesfm_df.rename(columns={"timestamp": "ds", "crack_disp_mm": "y"})
+    timesfm_df = timesfm_df[["unique_id", "ds", "y"]]
 
-print("\n--- Missing values after resampling ---")
-print(node_15min.isnull().sum())
+    context = timesfm_df["y"].dropna().astype(np.float32).values
+    if len(context) < 3:
+        return None
 
-# ==============================
-# CREATE TIMESFM-READY DATA
-# ==============================
+    outputs = list(
+        model.predict_batch(
+            [context],
+            horizon=8,
+            return_quantiles=True,
+            use_symmetric_averaging=False
+        )
+    )
 
-node = "MESH_A02"
+    return outputs[0].forecast
 
-node_df = df[df["node_id"] == node].copy()
-
-# Sort by timestamp
-node_df = node_df.sort_values("timestamp")
-
-# Keep only timestamp and target
-node_df = node_df[
-    ["timestamp", "crack_disp_mm"]
-]
-
-# Set timestamp as index
-node_df = node_df.set_index("timestamp")
-
-# Resample to 15-minute intervals
-node_15min = node_df.resample("15min").mean()
-
-# Interpolate missing values
-node_15min["crack_disp_mm"] = (
-    node_15min["crack_disp_mm"]
-    .interpolate(method="linear")
-)
-
-print("\n--- TimesFM-ready data ---")
-print(node_15min)
-
-# to check if there are any remaining missing values after interpolation
-print("\n--- Remaining missing values ---")
-print(node_15min.isnull().sum())
-
-# Create TimesFM input DataFrame
-
-timesfm_df = node_15min.reset_index()
-
-timesfm_df["unique_id"] = node
-
-timesfm_df = timesfm_df.rename(
-    columns={
-        "timestamp": "ds",
-        "crack_disp_mm": "y"
-    }
-)
-
-timesfm_df = timesfm_df[
-    ["unique_id", "ds", "y"]
-]
-
-print("\n--- Final TimesFM input ---")
-print(timesfm_df)
 
 # ==============================
 # LOAD TIMESFM 3.0
@@ -227,123 +191,92 @@ model = TimesFM3Forecaster(config)
 print("TimesFM 3.0 loaded successfully!")
 
 # ==============================
-# PREPARE FORECAST INPUT
+# FORECAST EACH NODE
 # ==============================
 
-context = timesfm_df["y"].values.astype(np.float32)
+nodes = sorted(df["node_id"].unique())
+all_results = {}
 
-print("\nInput points:", len(context))
-print("Last 5 observations:")
-print(context[-5:])
+for node in nodes:
+    node_df = df[df["node_id"] == node].sort_values("timestamp")
+    latest = node_df.iloc[-1] if not node_df.empty else None
 
-# ==============================
-# FIRST FORECAST
-# ==============================
+    if latest is None:
+        all_results[node] = {
+            "risk": "UNKNOWN",
+            "score": None,
+            "current_crack": None,
+            "max_forecast": None,
+            "forecast_increase": None,
+            "tilt_magnitude": None,
+            "vibration": None,
+            "battery": None,
+            "sensor_health": "HARDWARE_WARNING"
+        }
+        continue
 
-horizon = 8
+    current_crack = latest.get("crack_disp_mm")
+    tilt_x = latest.get("tilt_x_deg", 0.0)
+    tilt_y = latest.get("tilt_y_deg", 0.0)
+    vibration = latest.get("vibration_g", 0.0)
+    battery = latest.get("battery_v", 0.0)
 
-outputs = list(
-    model.predict_batch(
-        [context],
-        horizon=horizon,
-        return_quantiles=True,
-        use_symmetric_averaging=False
+    if pd.isna(current_crack):
+        all_results[node] = {
+            "risk": "UNKNOWN",
+            "score": None,
+            "current_crack": current_crack,
+            "max_forecast": None,
+            "forecast_increase": None,
+            "tilt_magnitude": (tilt_x ** 2 + tilt_y ** 2) ** 0.5,
+            "vibration": vibration,
+            "battery": battery,
+            "sensor_health": "HARDWARE_WARNING"
+        }
+        continue
+
+    forecast = forecast_node(node)
+    if forecast is None:
+        all_results[node] = {
+            "risk": "UNKNOWN",
+            "score": None,
+            "current_crack": float(current_crack),
+            "max_forecast": None,
+            "forecast_increase": None,
+            "tilt_magnitude": (tilt_x ** 2 + tilt_y ** 2) ** 0.5,
+            "vibration": vibration,
+            "battery": battery,
+            "sensor_health": "HARDWARE_WARNING"
+        }
+        continue
+
+    result = calculate_risk(
+        float(current_crack),
+        np.asarray(forecast, dtype=float),
+        float(tilt_x),
+        float(tilt_y),
+        float(vibration),
+        float(battery)
     )
-)
+    all_results[node] = result
 
-forecast = outputs[0].forecast
+print("\n========================================")
+print("       ALL NODE RISK SUMMARY")
+print("========================================")
 
-print("\n--- FORECAST ---")
+for node in nodes:
+    result = all_results.get(node)
+    if result is None:
+        continue
 
-for i, value in enumerate(forecast):
-    print(f"Future step {i+1}: {value:.3f} mm")
+    print(f"\nNode: {node}")
+    print(f"Current Crack: {result.get('current_crack')}")
+    print(f"Maximum Forecast: {result.get('max_forecast')}")
+    print(f"Forecast Increase: {result.get('forecast_increase')}")
+    print(f"Tilt Magnitude: {result.get('tilt_magnitude')}")
+    print(f"Vibration: {result.get('vibration')}")
+    print(f"Battery: {result.get('battery')}")
+    print(f"Structural Risk: {result.get('risk')}")
+    print(f"Risk Score: {result.get('score')}")
+    print(f"Sensor Health: {result.get('sensor_health')}")
 
-# ==============================
-# FORECAST VISUALIZATION
-# ==============================
-
-# Historical timestamps
-history_time = timesfm_df["ds"]
-
-# Historical values
-history_values = timesfm_df["y"]
-
-# Create future timestamps
-future_time = pd.date_range(
-    start=history_time.iloc[-1] + pd.Timedelta(minutes=15),
-    periods=horizon,
-    freq="15min"
-)
-
-plt.figure(figsize=(12, 5))
-
-# Historical data
-plt.plot(
-    history_time,
-    history_values,
-    marker="o",
-    label="Historical"
-)
-
-# Forecast
-plt.plot(
-    future_time,
-    forecast,
-    marker="o",
-    linestyle="--",
-    label="TimesFM Forecast"
-)
-
-plt.xlabel("Time")
-plt.ylabel("Crack displacement (mm)")
-plt.title("MESH_A02 - Crack Displacement Forecast")
-
-plt.legend()
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.show()
-
-# ==============================
-# SEND DATA TO RISK ENGINE
-# ==============================
-
-node = "MESH_A02"
-
-latest = (
-    df[df["node_id"] == node]
-    .sort_values("timestamp")
-    .iloc[-1]
-)
-
-current_crack = float(latest["crack_disp_mm"])
-tilt_x = float(latest["tilt_x_deg"])
-tilt_y = float(latest["tilt_y_deg"])
-vibration = float(latest["vibration_g"])
-battery = float(latest["battery_v"])
-
-
-result = calculate_risk(
-    current_crack=current_crack,
-    forecast=forecast,
-    tilt_x=tilt_x,
-    tilt_y=tilt_y,
-    vibration=vibration,
-    battery=battery
-)
-
-print("\n==============================")
-print("       RISK ENGINE")
-print("==============================")
-
-print("Node:", node)
-print("Current crack:", result["current_crack"], "mm")
-print("Maximum forecast:", result["max_forecast"], "mm")
-print("Forecast increase:", result["forecast_increase"], "mm")
-print("Tilt magnitude:", result["tilt_magnitude"], "degrees")
-print("Vibration:", result["vibration"], "g")
-print("Battery:", result["battery"], "V")
-
-print("------------------------------")
-print("STRUCTURAL RISK:", result["risk"])
-print("RISK SCORE:", result["score"])
-print("SENSOR HEALTH:", result["sensor_health"])
