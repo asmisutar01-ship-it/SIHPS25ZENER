@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZENER | Node Details</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #f4f6f8;
+            color: #17202a;
+        }
+
+        header {
+            height: 72px;
+            background: #ffffff;
+            border-bottom: 1px solid #e1e5e8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 35px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand h1 {
+            font-size: 25px;
+            letter-spacing: 2px;
+        }
+
+        .brand span {
+            color: #7b8794;
+            font-size: 14px;
+            border-left: 1px solid #d9dde1;
+            padding-left: 14px;
+        }
+
+        .back-btn {
+            background: #17202a;
+            color: white;
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        main {
+            max-width: 1300px;
+            margin: auto;
+            padding: 30px 35px 50px;
+        }
+
+        .page-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .node-title {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .critical { background: #fde8e8; color: #c62828; }
+        .warning { background: #fff3df; color: #a86000; }
+        .normal { background: #e8f5e9; color: #287d3c; }
+        .fault { background: #f5e6e6; color: #7f1d1d; }
+        .unknown { background: #eef2f5; color: #4b5563; }
+
+        .section {
+            background: white;
+            border: 1px solid #e2e6ea;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid #e8ebee;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            gap: 18px;
+            padding: 20px;
+        }
+
+        .sensor-card {
+            border: 1px solid #e4e8eb;
+            border-radius: 8px;
+            padding: 16px;
+            background: #fafbfc;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #7b8794;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .chart-container {
+            height: 360px;
+            padding: 20px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .not-found {
+            background: white;
+            border: 1px solid #e2e6ea;
+            border-radius: 10px;
+            padding: 40px 25px;
+            text-align: center;
+            max-width: 800px;
+            margin: 60px auto 0;
+        }
+
+        .not-found h2 {
+            margin-bottom: 12px;
+            font-size: 26px;
+        }
+
+        .not-found p {
+            color: #7b8794;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .card-grid {
+                grid-template-columns: repeat(2, minmax(180px, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 0 18px;
+            }
+
+            header .brand span {
+                display: none;
+            }
+
+            main {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <h1>ZENER</h1>
+        <span>Structural Health Monitoring</span>
+    </div>
+
+    <a class="back-btn" href="{{ back_to_dashboard }}">← Back to Dashboard</a>
+</header>
+
+<main>
+
+    {% if not_found %}
+
+    <div class="not-found">
+        <h2>Node Not Found</h2>
+        <p>{{ message }}</p>
+        <a class="back-btn" href="{{ back_to_dashboard }}">Back to Dashboard</a>
+    </div>
+
+    {% else %}
+
+    <div class="page-top">
+        <div class="node-title">{{ node_id }}</div>
+
+        <div class="status-badge
+            {% if risk.risk in ['CRITICAL', 'CRITICAL_SUDDEN'] %} critical
+            {% elif risk.risk == 'WARNING' %} warning
+            {% elif risk.risk == 'NORMAL' %} normal
+            {% elif risk.risk == 'HARDWARE_FAULT' %} fault
+            {% else %} unknown
+            {% endif %}
+        ">
+            {{ risk.risk }}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            Node Summary
+        </div>
+
+        <div class="card-grid">
+            <div class="sensor-card">
+                <div class="metric-label">Node</div>
+                <div class="metric-value">{{ node_id }}</div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Current Status</div>
+                <div class="metric-value">{{ latest.status }}</div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Risk Level</div>
+                <div class="metric-value">{{ risk.risk }}</div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Risk Score</div>
+                <div class="metric-value">
+                    {% if risk.score is not none %}
+                        {{ risk.score }}/8
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            Sensor Summary
+        </div>
+
+        <div class="card-grid">
+            <div class="sensor-card">
+                <div class="metric-label">Current Crack</div>
+                <div class="metric-value">
+                    {% if risk.current_crack is not none %}
+                        {{ risk.current_crack }} mm
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Maximum TimesFM Forecast</div>
+                <div class="metric-value">
+                    {% if risk.max_forecast is not none %}
+                        {{ risk.max_forecast }} mm
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Forecast Increase</div>
+                <div class="metric-value">
+                    {% if risk.forecast_increase is not none %}
+                        {{ risk.forecast_increase }} mm
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Tilt X</div>
+                <div class="metric-value">
+                    {{ latest.tilt_x_deg }}°
+                </div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Tilt Y</div>
+                <div class="metric-value">
+                    {{ latest.tilt_y_deg }}°
+                </div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Tilt Magnitude</div>
+                <div class="metric-value">
+                    {% if risk.tilt_magnitude is not none %}
+                        {{ risk.tilt_magnitude }}°
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Vibration</div>
+                <div class="metric-value">
+                    {% if risk.vibration is not none %}
+                        {{ risk.vibration }} g
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Battery</div>
+                <div class="metric-value">
+                    {{ latest.battery_v }} V
+                </div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Sensor Health</div>
+                <div class="metric-value">
+                    {{ risk.sensor_health }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">Crack Displacement Trend</div>
+        <div class="chart-container">
+            <canvas id="crackChart"></canvas>
+        </div>
+    </div>
+
+    {% endif %}
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const historical = {{ historical | tojson }};
+    const forecast = {{ forecast | tojson }};
+
+    if (!{{ not_found | tojson }}) {
+        const labels = historical.map(item => item.timestamp);
+        const crackValues = historical.map(item => item.crack_disp_mm);
+
+        let forecastLabels = [];
+        if (historical.length > 0 && forecast.length > 0) {
+            const lastTimestamp = new Date(historical[historical.length - 1].timestamp);
+            for (let i = 1; i <= forecast.length; i++) {
+                const futureTime = new Date(lastTimestamp);
+                futureTime.setMinutes(futureTime.getMinutes() + (15 * i));
+                forecastLabels.push(futureTime.toISOString());
+            }
+        }
+
+        const actualData = [
+            ...crackValues,
+            ...Array(forecast.length).fill(null)
+        ];
+
+        const forecastData = [
+            ...Array(Math.max(crackValues.length - 1, 0)).fill(null),
+            ...(crackValues.length > 0 ? [crackValues[crackValues.length - 1]] : []),
+            ...forecast
+        ];
+
+        const ctx = document.getElementById('crackChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [...labels, ...forecastLabels],
+                datasets: [
+                    {
+                        label: 'Actual Crack Displacement',
+                        data: actualData,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        spanGaps: false,
+                        borderColor: '#1f77b4'
+                    },
+                    {
+                        label: 'TimesFM Forecast',
+                        data: forecastData,
+                        borderWidth: 2,
+                        borderDash: [6, 6],
+                        tension: 0.3,
+                        spanGaps: false,
+                        borderColor: '#d97706'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { display: true }
+                },
+                scales: {
+                    x: {
+                        ticks: { maxTicksLimit: 8 }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Crack Displacement (mm)'
+                        },
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

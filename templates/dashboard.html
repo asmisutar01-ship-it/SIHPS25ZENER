@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ZENER | Structural Health Monitoring</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #f4f6f8;
+            color: #17202a;
+        }
+
+        /* ================= HEADER ================= */
+
+        header {
+            height: 72px;
+            background: #ffffff;
+            border-bottom: 1px solid #e1e5e8;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 35px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand h1 {
+            font-size: 25px;
+            letter-spacing: 2px;
+        }
+
+        .brand span {
+            color: #7b8794;
+            font-size: 14px;
+            border-left: 1px solid #d9dde1;
+            padding-left: 14px;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #287d3c;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            background: #36a852;
+            border-radius: 50%;
+        }
+
+        /* ================= MAIN ================= */
+
+        main {
+            padding: 30px 35px 50px;
+            max-width: 1500px;
+            margin: auto;
+        }
+
+        .page-title {
+            margin-bottom: 25px;
+        }
+
+        .page-title h2 {
+            font-size: 25px;
+            margin-bottom: 5px;
+        }
+
+        .page-title p {
+            color: #7b8794;
+            font-size: 14px;
+        }
+
+        /* ================= KPI CARDS ================= */
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .kpi-card {
+            background: white;
+            border: 1px solid #e2e6ea;
+            border-radius: 10px;
+            padding: 22px;
+        }
+
+        .kpi-label {
+            color: #7b8794;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 7px;
+        }
+
+        .kpi-sub {
+            font-size: 12px;
+            color: #8a959e;
+        }
+
+        .risk-critical {
+            color: #c62828;
+        }
+
+        .risk-warning {
+            color: #d9822b;
+        }
+
+        .risk-normal {
+            color: #287d3c;
+        }
+
+        /* ================= SECTION ================= */
+
+        .section {
+            background: white;
+            border: 1px solid #e2e6ea;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid #e8ebee;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h3 {
+            font-size: 16px;
+        }
+
+        /* ================= HIGHEST RISK ================= */
+
+        .risk-node {
+            padding: 25px;
+
+            display: grid;
+            grid-template-columns: 1.2fr repeat(4, 1fr) 160px;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .node-name {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .node-status {
+            margin-top: 7px;
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .critical {
+            background: #fde8e8;
+            color: #c62828;
+        }
+
+        .warning {
+            background: #fff3df;
+            color: #a86000;
+        }
+
+        .normal {
+            background: #e8f5e9;
+            color: #287d3c;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #8a959e;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .details-btn {
+            border: 1px solid #17202a;
+            background: #17202a;
+            color: white;
+
+            padding: 10px 13px;
+            border-radius: 6px;
+
+            font-size: 11px;
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+        .details-btn:hover {
+            background: #303b44;
+        }
+
+        /* ================= TREND ================= */
+
+        .trend-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .trend-controls label {
+            font-size: 12px;
+            color: #7b8794;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 1px solid #d6dce1;
+            border-radius: 6px;
+            background: white;
+            font-size: 13px;
+        }
+
+        .chart-container {
+            height: 330px;
+            padding: 25px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* ================= BOTTOM GRID ================= */
+
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        /* ================= ALERTS ================= */
+
+        .alert-list {
+            padding: 5px 20px;
+        }
+
+        .alert-item {
+            padding: 15px 5px;
+            border-bottom: 1px solid #edf0f2;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .alert-main {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .alert-icon {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-top: 7px;
+            flex-shrink: 0;
+        }
+
+        .alert-critical {
+            background: #d32f2f;
+        }
+
+        .alert-warning {
+            background: #e6952f;
+        }
+
+        .alert-text {
+            flex: 1;
+        }
+
+        .alert-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .alert-text strong {
+            font-size: 13px;
+        }
+
+        .alert-status-badge {
+            display: inline-block;
+            padding: 4px 7px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        }
+
+        .alert-critical-badge {
+            background: #fde8e8;
+            color: #c62828;
+        }
+
+        .alert-warning-badge {
+            background: #fff3df;
+            color: #a86000;
+        }
+
+        .reason-list {
+            margin: 0 0 8px 18px;
+            padding: 0;
+            color: #485564;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .alert-score {
+            font-size: 11px;
+            color: #17202a;
+            font-weight: 700;
+        }
+
+        .alert-time {
+            font-size: 10px;
+            color: #9aa3aa;
+            white-space: nowrap;
+            padding-top: 4px;
+        }
+
+        /* ================= NODE STATUS ================= */
+
+        .nodes-grid {
+            padding: 18px;
+
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .node-card {
+            border: 1px solid #e4e8eb;
+            border-radius: 7px;
+            padding: 14px;
+        }
+
+        .node-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .node-card h4 {
+            font-size: 13px;
+        }
+
+        .mini-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .mini-normal {
+            background: #36a852;
+        }
+
+        .mini-warning {
+            background: #e6952f;
+        }
+
+        .mini-critical {
+            background: #d32f2f;
+        }
+
+        .node-info {
+            font-size: 11px;
+            color: #7b8794;
+            line-height: 1.7;
+        }
+
+        .node-info strong {
+            color: #303b44;
+        }
+
+        /* ================= RESPONSIVE ================= */
+
+        @media (max-width: 1100px) {
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .risk-node {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 700px) {
+
+            header {
+                padding: 0 18px;
+            }
+
+            header .brand span {
+                display: none;
+            }
+
+            main {
+                padding: 20px 15px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .risk-node {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .nodes-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+
+    <div class="brand">
+        <h1>ZENER</h1>
+        <span>Structural Health Monitoring</span>
+    </div>
+
+    <div class="system-status">
+        <div class="status-dot"></div>
+        SYSTEM ONLINE
+    </div>
+
+</header>
+
+
+<main>
+
+    <div class="page-title">
+        <h2>Structural Overview</h2>
+        <p>Real-time monitoring of connected structural sensor nodes</p>
+    </div>
+
+
+    <!-- ================= KPI CARDS ================= -->
+
+    <div class="kpi-grid">
+
+        <div class="kpi-card">
+            <div class="kpi-label">OVERALL STRUCTURAL RISK</div>
+
+            <div class="kpi-value
+                {% if overall_risk == 'CRITICAL' %}
+                    risk-critical
+                {% elif overall_risk == 'WARNING' %}
+                    risk-warning
+                {% else %}
+                    risk-normal
+                {% endif %}
+            ">
+                {{ overall_risk }}
+            </div>
+
+            <div class="kpi-sub">
+                Risk Score: {{ overall_score }}/10
+            </div>
+        </div>
+
+
+        <div class="kpi-card">
+
+            <div class="kpi-label">CRITICAL NODES</div>
+
+            <div class="kpi-value risk-critical">
+                {{ critical_count }}
+            </div>
+
+            <div class="kpi-sub">
+                of {{ total_nodes }} monitored nodes
+            </div>
+
+        </div>
+
+
+        <div class="kpi-card">
+
+            <div class="kpi-label">MAXIMUM CURRENT CRACK</div>
+
+            <div class="kpi-value">
+                {{ max_crack }} mm
+            </div>
+
+            <div class="kpi-sub">
+                {{ max_crack_node }}
+            </div>
+
+        </div>
+
+
+        <div class="kpi-card">
+
+            <div class="kpi-label">ACTIVE NODES</div>
+
+            <div class="kpi-value">
+                {{ active_nodes }}/{{ total_nodes }}
+            </div>
+
+            <div class="kpi-sub">
+                Sensor nodes online
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= HIGHEST RISK NODE ================= -->
+
+    <div class="section">
+
+        <div class="section-header">
+            <h3>HIGHEST RISK NODE</h3>
+        </div>
+
+
+        <div class="risk-node">
+
+            <div>
+
+                <div class="node-name">
+                    {{ highest_node.node_id }}
+                </div>
+
+                <span class="node-status
+                    {% if highest_node.status in ['CRITICAL', 'CRITICAL_SUDDEN'] %}
+                        critical
+                    {% elif highest_node.status == 'WARNING' %}
+                        warning
+                    {% else %}
+                        normal
+                    {% endif %}
+                ">
+                    {{ highest_node.status }}
+                </span>
+
+            </div>
+
+
+            <div>
+                <div class="metric-label">CURRENT CRACK</div>
+
+                <div class="metric-value">
+                    {% if highest_node.crack_disp_mm is not none %}
+                        {{ highest_node.crack_disp_mm }} mm
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+
+
+            <div>
+                <div class="metric-label">MAX FORECAST</div>
+
+                <div class="metric-value">
+                    {{ highest_node.max_forecast }} mm
+                </div>
+            </div>
+
+
+            <div>
+                <div class="metric-label">FORECAST INCREASE</div>
+
+                <div class="metric-value">
+                    +{{ highest_node.forecast_increase }} mm
+                </div>
+            </div>
+
+
+            <div>
+                <div class="metric-label">RISK SCORE</div>
+
+                <div class="metric-value">
+                    {{ highest_node.risk_score }}/10
+                </div>
+            </div>
+
+
+            <button class="details-btn"
+                    onclick="window.location.href='/node/{{ highest_node.node_id }}'">
+                VIEW NODE DETAILS →
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= STRUCTURAL TREND ================= -->
+
+    <div class="section">
+
+        <div class="section-header">
+
+            <h3>STRUCTURAL TREND</h3>
+
+            <div class="trend-controls">
+
+                <label for="nodeSelector">
+                    Node:
+                </label>
+
+                <select id="nodeSelector"
+                        onchange="updateChart()">
+
+                    {% for node in node_ids %}
+
+                    <option value="{{ node }}">
+                        {{ node }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <div class="chart-container">
+
+            <canvas id="crackChart"></canvas>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= ALERTS + NODE STATUS ================= -->
+
+    <div class="bottom-grid">
+
+
+        <!-- ALERTS -->
+
+        <div class="section">
+
+            <div class="section-header">
+                <h3>ACTIVE ALERTS</h3>
+            </div>
+
+            <div class="alert-list">
+
+                {% if alerts %}
+
+                    {% for alert in alerts %}
+
+                    <div class="alert-item">
+
+                        <div class="alert-main">
+
+                            <div class="alert-icon
+                                {% if alert.risk in ['CRITICAL', 'CRITICAL_SUDDEN'] %}
+                                    alert-critical
+                                {% else %}
+                                    alert-warning
+                                {% endif %}
+                            ">
+                            </div>
+
+                            <div class="alert-text">
+
+                                <div class="alert-header-row">
+                                    <strong>{{ alert.node_id }}</strong>
+                                    <span class="alert-status-badge
+                                        {% if alert.risk in ['CRITICAL', 'CRITICAL_SUDDEN'] %}
+                                            alert-critical-badge
+                                        {% else %}
+                                            alert-warning-badge
+                                        {% endif %}
+                                    ">
+                                        {{ alert.risk }}
+                                    </span>
+                                </div>
+
+                                <ul class="reason-list">
+                                    {% for reason in alert.reasons %}
+                                        <li>{{ reason }}</li>
+                                    {% endfor %}
+                                </ul>
+
+                                <div class="alert-score">
+                                    Risk Score: {{ alert.risk_score }}/10
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="alert-time">
+                            {{ alert.formatted_time }}
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="alert-item">
+                        <div class="alert-text">
+                            <strong>No active alerts</strong>
+                            <p>All monitored nodes are operating normally.</p>
+                        </div>
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- NODE STATUS -->
+
+        <div class="section">
+
+            <div class="section-header">
+                <h3>NODE STATUS</h3>
+            </div>
+
+
+            <div class="nodes-grid">
+
+                {% for node in node_list %}
+
+                <div class="node-card">
+
+                    <div class="node-card-top">
+
+                        <h4>
+                            {{ node.node_id }}
+                        </h4>
+
+                        <div class="mini-status
+                            {% if node.status in ['CRITICAL', 'CRITICAL_SUDDEN'] %}
+                                mini-critical
+                            {% elif node.status == 'WARNING' %}
+                                mini-warning
+                            {% else %}
+                                mini-normal
+                            {% endif %}
+                        ">
+                        </div>
+
+                    </div>
+
+
+                    <div class="node-info">
+
+                        Status:
+                        <strong>
+                            {{ node.status }}
+                        </strong>
+
+                        <br>
+
+                        Crack:
+                        <strong>
+                            {% if node.crack_disp_mm is not none %}
+                                {{ node.crack_disp_mm }} mm
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </strong>
+
+                        <br>
+
+                        Battery:
+                        <strong>
+                            {{ node.battery_v }} V
+                        </strong>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+
+<!-- Chart.js -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script>
+
+    /* Data coming from Flask */
+
+    const sensorData = {{ sensor_data | tojson }};
+    const forecastData = {{ forecast_data | tojson }};
+
+
+    let crackChart;
+
+
+    function getNodeData(nodeId) {
+
+        return sensorData
+            .filter(item => item.node_id === nodeId)
+            .sort((a, b) =>
+                new Date(a.timestamp) - new Date(b.timestamp)
+            );
+
+    }
+
+
+    function updateChart() {
+
+        const nodeId =
+            document.getElementById("nodeSelector").value;
+
+        const nodeData =
+            getNodeData(nodeId);
+
+
+        const labels =
+            nodeData.map(item => item.timestamp);
+
+
+        const crackValues =
+            nodeData.map(item =>
+                item.crack_disp_mm
+            );
+
+        const forecastValues =
+            forecastData[nodeId] || [];
+
+        let forecastLabels = [];
+
+        if (nodeData.length > 0 && forecastValues.length > 0) {
+            const lastTimestamp = new Date(
+                nodeData[nodeData.length - 1].timestamp
+            );
+
+            for (let i = 1; i <= forecastValues.length; i++) {
+                const futureTime = new Date(lastTimestamp);
+
+                futureTime.setMinutes(
+                    futureTime.getMinutes() + (15 * i)
+                );
+
+                forecastLabels.push(
+                    futureTime.toISOString()
+                );
+            }
+        }
+
+
+        if (crackChart) {
+            crackChart.destroy();
+        }
+
+
+        const ctx =
+            document.getElementById("crackChart")
+            .getContext("2d");
+
+
+        crackChart =
+            new Chart(ctx, {
+
+                type: "line",
+
+                data: {
+
+                    labels: [
+                        ...labels,
+                        ...forecastLabels
+                    ],
+
+                    datasets: [
+
+                        {
+                            label: "Actual Crack Displacement",
+
+                            data: [
+                                ...crackValues,
+                                ...Array(forecastValues.length).fill(null)
+                            ],
+
+                            borderWidth: 2,
+                            tension: 0.3,
+                            spanGaps: false
+                        },
+
+                        {
+                            label: "TimesFM Forecast",
+
+                            data: [
+                                ...Array(
+                                    Math.max(crackValues.length - 1, 0)
+                                ).fill(null),
+
+                                ...(crackValues.length > 0
+                                    ? [crackValues[crackValues.length - 1]]
+                                    : []),
+
+                                ...forecastValues
+                            ],
+
+                            borderWidth: 2,
+                            borderDash: [6, 6],
+                            tension: 0.3,
+                            spanGaps: false
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    interaction: {
+                        intersect: false,
+                        mode: "index"
+                    },
+
+                    plugins: {
+
+                        legend: {
+                            display: true
+                        }
+
+                    },
+
+                    scales: {
+
+                        x: {
+                            ticks: {
+                                maxTicksLimit: 8
+                            }
+                        },
+
+                        y: {
+
+                            title: {
+                                display: true,
+                                text: "Crack Displacement (mm)"
+                            },
+
+                            beginAtZero: true
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+    }
+
+
+    function openNode(nodeId) {
+
+        alert(
+            "Node details page for " +
+            nodeId +
+            " will be added next."
+        );
+
+    }
+
+
+    updateChart();
+
+</script>
+
+</body>
+</html>
