@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, jsonify, render_template
 import json
 import os
 import pandas as pd
@@ -6,9 +6,12 @@ import numpy as np
 
 from risk_engine import calculate_risk, build_alert_details
 from timesfm_forecast import forecast_node
+from mqtt_ingestion import mqtt_ingestion
+from supabase_db import sensor_database
 
 
 app = Flask(__name__)
+mqtt_ingestion.start()
 
 
 # ============================================================
@@ -17,6 +20,14 @@ app = Flask(__name__)
 
 def load_sensor_data():
 
+    database_readings = sensor_database.read_readings()
+
+    if database_readings:
+        return database_readings
+
+    if mqtt_ingestion.has_readings():
+        return mqtt_ingestion.get_readings()
+
     file_path = os.path.join(
         os.path.dirname(__file__),
         "sensor_data.json"
@@ -24,6 +35,17 @@ def load_sensor_data():
 
     with open(file_path, "r") as file:
         return json.load(file)
+
+
+def numeric_value(value, default=None):
+
+    if value is None or pd.isna(value):
+        return default
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
 # ============================================================
@@ -67,14 +89,11 @@ def calculate_node_risk(df, node):
     latest = node_df.iloc[-1]
 
 
-    current_crack = latest["crack_disp_mm"]
-
-    tilt_x = latest["tilt_x_deg"]
-    tilt_y = latest["tilt_y_deg"]
-
-    vibration = latest["vibration_g"]
-
-    battery = latest["battery_v"]
+    current_crack = numeric_value(latest.get("crack_disp_mm"))
+    tilt_x = numeric_value(latest.get("tilt_x_deg"), 0.0)
+    tilt_y = numeric_value(latest.get("tilt_y_deg"), 0.0)
+    vibration = numeric_value(latest.get("vibration_g"), 0.0)
+    battery = numeric_value(latest.get("battery_v"))
 
 
     # --------------------------------------------------------
@@ -88,7 +107,7 @@ def calculate_node_risk(df, node):
             tilt_y ** 2
         ) ** 0.5
 
-        return {
+        result = {
 
             "risk": "HARDWARE_FAULT",
 
@@ -102,13 +121,16 @@ def calculate_node_risk(df, node):
 
             "tilt_magnitude": tilt_magnitude,
 
-            "vibration": float(vibration),
+            "vibration": vibration,
 
-            "battery": float(battery),
+            "battery": battery,
 
             "sensor_health": "HARDWARE_FAULT"
 
         }
+
+        print(f"AI/RISK RESULT: {node} -> {result['risk']}")
+        return result
 
 
     # --------------------------------------------------------
@@ -127,7 +149,7 @@ def calculate_node_risk(df, node):
 
     if forecast is None:
 
-        return {
+        result = {
 
             "risk": "UNKNOWN",
 
@@ -144,13 +166,16 @@ def calculate_node_risk(df, node):
                 tilt_y ** 2
             ) ** 0.5,
 
-            "vibration": float(vibration),
+            "vibration": vibration,
 
-            "battery": float(battery),
+            "battery": battery,
 
             "sensor_health": "UNKNOWN"
 
         }
+
+        print(f"AI/RISK RESULT: {node} -> {result['risk']}")
+        return result
 
 
     # --------------------------------------------------------
@@ -166,14 +191,18 @@ def calculate_node_risk(df, node):
         float(tilt_x),
         float(tilt_y),
         float(vibration),
-        float(battery)
+        battery if battery is not None else 0.0
     )
+
+    result["battery"] = battery
 
     # Store TimesFM forecast so the dashboard can use it
     result["forecast"] = [
         float(value)
         for value in forecast
     ]
+
+    print(f"AI/RISK RESULT: {node} -> {result['risk']}")
 
     return result
 
@@ -189,7 +218,8 @@ def build_node_list(data):
 
     # Convert timestamps
     df["timestamp"] = pd.to_datetime(
-        df["timestamp"]
+        df["timestamp"],
+        errors="coerce"
     )
 
     # Sort data
@@ -355,16 +385,14 @@ def calculate_dashboard(data):
 
 
     highest_node = max(
-
         node_list,
-
-        key=lambda node:
-        risk_priority.get(
-            node["risk"],
-            0
-        )
-
-    )
+        key=lambda node: risk_priority.get(node["risk"], 0)
+    ) if node_list else {
+        "node_id": "N/A",
+        "risk": "UNKNOWN",
+        "score": None,
+        "sensor_health": "UNKNOWN"
+    }
 
 
     # --------------------------------------------------------
@@ -435,6 +463,8 @@ def calculate_dashboard(data):
         node["node_id"]
         for node in node_list
     )
+
+    print("DASHBOARD DATA UPDATED")
 
     return {
 
@@ -574,6 +604,19 @@ def node_details(node_id):
     )
 
 
+@app.route("/api/dashboard-data")
+def dashboard_data_api():
+
+    data = load_sensor_data()
+    dashboard_data = calculate_dashboard(data)
+
+    return jsonify({
+        "node_list": dashboard_data["node_list"],
+        "sensor_data": dashboard_data["sensor_data"],
+        "forecast_data": dashboard_data["forecast_data"]
+    })
+
+
 # ============================================================
 # RUN
 # ============================================================
@@ -581,5 +624,8 @@ def node_details(node_id):
 if __name__ == "__main__":
 
     app.run(
-        debug=True
+        host="127.0.0.1",
+        port=5000,
+        debug=True,
+        use_reloader=False
     )

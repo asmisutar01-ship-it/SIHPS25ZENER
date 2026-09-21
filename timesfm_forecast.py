@@ -153,4 +153,6 @@ def forecast_node(df, node):
 
 
     # Return forecast values
-    return outputs[0].forecast
+    forecast = outputs[0].forecast
+    print(f"TIMESFM FORECAST GENERATED: {node}")
+    return forecast

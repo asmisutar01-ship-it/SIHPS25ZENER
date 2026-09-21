@@ -461,6 +461,147 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
+
+        :root {
+            --monitor-bg: #0b1118;
+            --monitor-surface: #111b26;
+            --monitor-surface-alt: #162331;
+            --monitor-border: #25384b;
+            --monitor-text: #e4edf5;
+            --monitor-muted: #8ca3b8;
+            --monitor-blue: #38a8ff;
+            --monitor-cyan: #35d6d4;
+            --monitor-purple: #9b8cff;
+        }
+
+        body {
+            background: var(--monitor-bg);
+            color: var(--monitor-text);
+        }
+
+        header,
+        .kpi-card,
+        .section {
+            background: var(--monitor-surface);
+            border-color: var(--monitor-border);
+        }
+
+        header {
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+        }
+
+        .brand h1,
+        .page-title h2,
+        .section-header h3,
+        .node-name,
+        .metric-value,
+        .node-card h4,
+        .alert-text strong {
+            color: var(--monitor-text);
+        }
+
+        .brand span,
+        .page-title p,
+        .kpi-label,
+        .kpi-sub,
+        .metric-label,
+        .trend-controls label,
+        .node-info,
+        .alert-time {
+            color: var(--monitor-muted);
+        }
+
+        .system-status,
+        .risk-normal {
+            color: var(--monitor-cyan);
+        }
+
+        .status-dot,
+        .mini-normal {
+            background: var(--monitor-cyan);
+            box-shadow: 0 0 10px rgba(53, 214, 212, 0.45);
+        }
+
+        .kpi-value,
+        .details-btn {
+            color: var(--monitor-blue);
+        }
+
+        .risk-critical,
+        .risk-warning {
+            text-shadow: 0 0 14px rgba(255, 99, 99, 0.16);
+        }
+
+        .risk-warning {
+            color: #ffad5c;
+        }
+
+        .risk-critical {
+            color: #ff6b76;
+        }
+
+        .section-header,
+        .alert-item {
+            border-color: var(--monitor-border);
+        }
+
+        select {
+            color: var(--monitor-text);
+            background: var(--monitor-surface-alt);
+            border-color: var(--monitor-border);
+        }
+
+        .details-btn {
+            background: #123452;
+            border-color: #23628e;
+        }
+
+        .details-btn:hover {
+            background: #17496d;
+        }
+
+        .node-card {
+            background: rgba(22, 35, 49, 0.52);
+            border-color: var(--monitor-border);
+        }
+
+        .node-info strong,
+        .alert-score {
+            color: #c5d8e8;
+        }
+
+        .reason-list {
+            color: #a8bacb;
+        }
+
+        .critical {
+            background: rgba(155, 43, 63, 0.24);
+            color: #ff8b94;
+        }
+
+        .warning {
+            background: rgba(164, 95, 28, 0.24);
+            color: #ffc078;
+        }
+
+        .normal {
+            background: rgba(23, 139, 139, 0.2);
+            color: #70e5e0;
+        }
+
+        .alert-critical-badge {
+            background: rgba(155, 43, 63, 0.24);
+            color: #ff8b94;
+        }
+
+        .alert-warning-badge {
+            background: rgba(164, 95, 28, 0.24);
+            color: #ffc078;
+        }
+
+        .alert-list p {
+            color: var(--monitor-muted);
+        }
     </style>
 </head>
 
@@ -566,75 +707,102 @@
     <div class="section">
 
         <div class="section-header">
-            <h3>HIGHEST RISK NODE</h3>
+            <h3>NODE SUMMARY</h3>
+
+            <div class="trend-controls">
+                <label for="summaryNodeSelector">
+                    Node:
+                </label>
+
+                <select id="summaryNodeSelector"
+                        onchange="updateNodeSummary()">
+
+                    {% for node in node_ids %}
+
+                    <option value="{{ node }}"
+                        {% if node == 'MESH_A01' %}selected{% endif %}>
+                        {{ node }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
         </div>
 
 
         <div class="risk-node">
 
-            <div>
+            <div id="summaryNodeName">
 
-                <div class="node-name">
-                    {{ highest_node.node_id }}
-                </div>
-
-                <span class="node-status
-                    {% if highest_node.status in ['CRITICAL', 'CRITICAL_SUDDEN'] %}
-                        critical
-                    {% elif highest_node.status == 'WARNING' %}
-                        warning
-                    {% else %}
-                        normal
-                    {% endif %}
-                ">
-                    {{ highest_node.status }}
-                </span>
+                <div class="node-name"></div>
+                <span class="node-status"></span>
 
             </div>
 
 
             <div>
                 <div class="metric-label">CURRENT CRACK</div>
-
-                <div class="metric-value">
-                    {% if highest_node.crack_disp_mm is not none %}
-                        {{ highest_node.crack_disp_mm }} mm
-                    {% else %}
-                        N/A
-                    {% endif %}
-                </div>
+                <div class="metric-value" id="summaryCurrentCrack"></div>
             </div>
 
 
             <div>
                 <div class="metric-label">MAX FORECAST</div>
-
-                <div class="metric-value">
-                    {{ highest_node.max_forecast }} mm
-                </div>
+                <div class="metric-value" id="summaryMaxForecast"></div>
             </div>
 
 
             <div>
                 <div class="metric-label">FORECAST INCREASE</div>
-
-                <div class="metric-value">
-                    +{{ highest_node.forecast_increase }} mm
-                </div>
+                <div class="metric-value" id="summaryForecastIncrease"></div>
             </div>
 
 
             <div>
-                <div class="metric-label">RISK SCORE</div>
-
-                <div class="metric-value">
-                    {{ highest_node.risk_score }}/10
-                </div>
+                <div class="metric-label">TILT MAGNITUDE</div>
+                <div class="metric-value" id="summaryTiltMagnitude"></div>
             </div>
 
 
-            <button class="details-btn"
-                    onclick="window.location.href='/node/{{ highest_node.node_id }}'">
+            <div>
+                <div class="metric-label">VIBRATION</div>
+                <div class="metric-value" id="summaryVibration"></div>
+            </div>
+
+
+            <div>
+                <div class="metric-label">BATTERY</div>
+                <div class="metric-value" id="summaryBattery"></div>
+            </div>
+
+
+            <div>
+                <div class="metric-label">TEMPERATURE</div>
+                <div class="metric-value" id="summaryTemperature"></div>
+            </div>
+
+
+            <div>
+                <div class="metric-label">STATE</div>
+                <div class="metric-value" id="summaryState"></div>
+            </div>
+
+
+            <div>
+                <div class="metric-label">STRUCTURAL RISK</div>
+                <div class="metric-value" id="summaryRisk"></div>
+            </div>
+
+
+            <div>
+                <div class="metric-label">SENSOR HEALTH</div>
+                <div class="metric-value" id="summarySensorHealth"></div>
+            </div>
+
+
+            <button class="details-btn" id="summaryDetailsButton">
                 VIEW NODE DETAILS →
             </button>
 
@@ -853,11 +1021,79 @@
 
     /* Data coming from Flask */
 
-    const sensorData = {{ sensor_data | tojson }};
-    const forecastData = {{ forecast_data | tojson }};
+    let sensorData = {{ sensor_data | tojson }};
+    let forecastData = {{ forecast_data | tojson }};
+    let nodeSummaryData = {{ node_list | tojson }};
 
 
     let crackChart;
+
+    Chart.defaults.color = "#9fb4c8";
+    Chart.defaults.borderColor = "#25384b";
+
+
+    function formatValue(value, suffix = "") {
+
+        if (value === null || value === undefined || value === "") {
+            return "N/A";
+        }
+
+        return `${value}${suffix}`;
+
+    }
+
+
+    function updateNodeSummary() {
+
+        const selector = document.getElementById("summaryNodeSelector");
+        const nodeId = selector.value;
+        const node = nodeSummaryData.find(item => item.node_id === nodeId);
+
+        if (!node) {
+            return;
+        }
+
+        const name = document.querySelector("#summaryNodeName .node-name");
+        const status = document.querySelector("#summaryNodeName .node-status");
+
+        name.textContent = node.node_id || "N/A";
+        status.textContent = node.status || node.risk || "N/A";
+        status.className = "node-status " + (
+            ["CRITICAL", "CRITICAL_SUDDEN"].includes(node.status)
+                ? "critical"
+                : node.status === "WARNING"
+                    ? "warning"
+                    : "normal"
+        );
+
+        document.getElementById("summaryCurrentCrack").textContent =
+            formatValue(node.crack_disp_mm, " mm");
+        document.getElementById("summaryMaxForecast").textContent =
+            formatValue(node.max_forecast, " mm");
+        document.getElementById("summaryForecastIncrease").textContent =
+            node.forecast_increase === null || node.forecast_increase === undefined
+                ? "N/A"
+                : `+${node.forecast_increase} mm`;
+        document.getElementById("summaryTiltMagnitude").textContent =
+            formatValue(node.tilt_magnitude, "°");
+        document.getElementById("summaryVibration").textContent =
+            formatValue(node.vibration, " g");
+        document.getElementById("summaryBattery").textContent =
+            formatValue(node.battery, " V");
+        document.getElementById("summaryTemperature").textContent =
+            formatValue(node.temperature_c, " °C");
+        document.getElementById("summaryState").textContent =
+            formatValue(node.state || node.status);
+        document.getElementById("summaryRisk").textContent =
+            formatValue(node.risk);
+        document.getElementById("summarySensorHealth").textContent =
+            formatValue(node.sensor_health);
+
+        document.getElementById("summaryDetailsButton").onclick = function() {
+            window.location.href = "/node/" + encodeURIComponent(node.node_id);
+        };
+
+    }
 
 
     function getNodeData(nodeId) {
@@ -1033,7 +1269,61 @@
     }
 
 
+    function updateNodeSelectors() {
+
+        const nodeIds = nodeSummaryData.map(node => node.node_id);
+        const selectors = [
+            document.getElementById("summaryNodeSelector"),
+            document.getElementById("nodeSelector")
+        ];
+
+        selectors.forEach(selector => {
+            const selectedNode = selector.value;
+            selector.innerHTML = "";
+
+            nodeIds.forEach(nodeId => {
+                const option = document.createElement("option");
+                option.value = nodeId;
+                option.textContent = nodeId;
+                selector.appendChild(option);
+            });
+
+            selector.value = nodeIds.includes(selectedNode)
+                ? selectedNode
+                : nodeIds[0] || "";
+        });
+
+    }
+
+
+    async function refreshDashboardData() {
+
+        try {
+            const response = await fetch("/api/dashboard-data", {
+                cache: "no-store"
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const payload = await response.json();
+            nodeSummaryData = payload.node_list || [];
+            sensorData = payload.sensor_data || [];
+            forecastData = payload.forecast_data || {};
+            updateNodeSelectors();
+            updateNodeSummary();
+            updateChart();
+        } catch (error) {
+            // Keep the last good dashboard state while MQTT is unavailable.
+        }
+
+    }
+
+
+    updateNodeSummary();
     updateChart();
+    window.setInterval(refreshDashboardData, 10000);
 
 </script>
 

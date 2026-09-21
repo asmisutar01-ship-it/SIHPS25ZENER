@@ -1,0 +1,8 @@
+supabase
+python-dotenv
+paho-mqtt
+pandas
+numpy
+flask
+matplotlib
+scikit-learn

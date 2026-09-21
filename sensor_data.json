@@ -558,5 +558,85 @@
     "crack_disp_mm": null,
     "battery_v": 2.85,
     "status": "HARDWARE_FAULT"
+  },
+  {
+    "timestamp": "2026-09-19T11:00:00Z",
+    "node_id": "MESH_A07",
+    "tilt_x_deg": 0.04,
+    "tilt_y_deg": 0.03,
+    "vibration_g": 0.02,
+    "crack_disp_mm": 0.08,
+    "battery_v": 3.78,
+    "status": "NORMAL"
+  },
+  {
+    "timestamp": "2026-09-19T11:15:00Z",
+    "node_id": "MESH_A07",
+    "tilt_x_deg": 0.04,
+    "tilt_y_deg": 0.03,
+    "vibration_g": 0.02,
+    "crack_disp_mm": 0.08,
+    "battery_v": 3.78,
+    "status": "NORMAL"
+  },
+  {
+    "timestamp": "2026-09-19T11:30:00Z",
+    "node_id": "MESH_A07",
+    "tilt_x_deg": 0.05,
+    "tilt_y_deg": 0.03,
+    "vibration_g": 0.02,
+    "crack_disp_mm": 0.08,
+    "battery_v": 3.78,
+    "status": "NORMAL"
+  },
+  {
+    "timestamp": "2026-09-19T11:45:00Z",
+    "node_id": "MESH_A07",
+    "tilt_x_deg": 0.05,
+    "tilt_y_deg": 0.04,
+    "vibration_g": 0.02,
+    "crack_disp_mm": 0.08,
+    "battery_v": 3.78,
+    "status": "NORMAL"
+  },
+  {
+    "timestamp": "2026-09-19T12:00:00Z",
+    "node_id": "MESH_A07",
+    "tilt_x_deg": 0.05,
+    "tilt_y_deg": 0.04,
+    "vibration_g": 0.03,
+    "crack_disp_mm": 0.08,
+    "battery_v": 3.78,
+    "status": "NORMAL"
+  },
+  {
+    "timestamp": "2026-09-19T12:15:00Z",
+    "node_id": "MESH_A07",
+    "tilt_x_deg": 0.05,
+    "tilt_y_deg": 0.04,
+    "vibration_g": 0.03,
+    "crack_disp_mm": 0.08,
+    "battery_v": 3.78,
+    "status": "NORMAL"
+  },
+  {
+    "timestamp": "2026-09-19T12:30:00Z",
+    "node_id": "MESH_A07",
+    "tilt_x_deg": 0.06,
+    "tilt_y_deg": 0.04,
+    "vibration_g": 0.03,
+    "crack_disp_mm": 0.08,
+    "battery_v": 3.78,
+    "status": "NORMAL"
+  },
+  {
+    "timestamp": "2026-09-19T12:45:00Z",
+    "node_id": "MESH_A07",
+    "tilt_x_deg": 0.06,
+    "tilt_y_deg": 0.04,
+    "vibration_g": 0.03,
+    "crack_disp_mm": 0.08,
+    "battery_v": 3.78,
+    "status": "NORMAL"
   }
 ]
