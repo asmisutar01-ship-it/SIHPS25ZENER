@@ -650,7 +650,12 @@
             </div>
 
             <div class="kpi-sub">
-                Risk Score: {{ overall_score }}/10
+                Risk Score:
+                {% if risk_score is not none %}
+                    {{ risk_score }}/10
+                {% else %}
+                    N/A
+                {% endif %}
             </div>
         </div>
 
@@ -994,7 +999,11 @@
 
                         Battery:
                         <strong>
-                            {{ node.battery_v }} V
+                            {% if node.battery_v is not none %}
+                                {{ node.battery_v }} V
+                            {% else %}
+                                N/A
+                            {% endif %}
                         </strong>
 
                     </div>

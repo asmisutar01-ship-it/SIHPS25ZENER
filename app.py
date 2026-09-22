@@ -48,6 +48,29 @@ def numeric_value(value, default=None):
         return default
 
 
+def effective_dashboard_status(sensor_status, risk_result):
+
+    status = str(sensor_status).strip().upper() if sensor_status is not None else ""
+
+    if status == "HARDWARE_FAULT":
+        return "HARDWARE_FAULT"
+
+    if status in {"CRITICAL", "WARNING", "NORMAL"}:
+        return status
+
+    score = numeric_value(risk_result.get("score"))
+    if score is not None and np.isfinite(score):
+        return risk_result.get("risk") or "UNKNOWN"
+
+    if status:
+        return status
+
+    if risk_result.get("risk") == "HARDWARE_FAULT":
+        return "HARDWARE_FAULT"
+
+    return "UNKNOWN"
+
+
 # ============================================================
 # GET LATEST READING OF EVERY NODE
 # ============================================================
@@ -264,6 +287,13 @@ def build_node_list(data):
             risk_result
         )
 
+        effective_status = effective_dashboard_status(
+            latest.get("status"),
+            risk_result
+        )
+        combined["status"] = effective_status
+        combined["risk"] = effective_status
+
         if "forecast" in risk_result:
 
             forecast_data[node_id] = [
@@ -310,7 +340,7 @@ def calculate_dashboard(data):
 
         for node in node_list
 
-        if node["risk"] == "CRITICAL"
+        if node["status"] == "CRITICAL"
 
     ]
 
@@ -386,9 +416,10 @@ def calculate_dashboard(data):
 
     highest_node = max(
         node_list,
-        key=lambda node: risk_priority.get(node["risk"], 0)
+        key=lambda node: risk_priority.get(node["status"], 0)
     ) if node_list else {
         "node_id": "N/A",
+        "status": "UNKNOWN",
         "risk": "UNKNOWN",
         "score": None,
         "sensor_health": "UNKNOWN"
@@ -399,13 +430,9 @@ def calculate_dashboard(data):
     # Overall risk
     # --------------------------------------------------------
 
-    overall_risk = (
-        highest_node["risk"]
-    )
+    overall_risk = highest_node["status"]
 
-    overall_score = (
-        highest_node["score"]
-    )
+    risk_score = highest_node.get("score")
 
 
     # --------------------------------------------------------
@@ -418,7 +445,7 @@ def calculate_dashboard(data):
 
         for node in node_list
 
-        if node["risk"] in [
+        if node["status"] in [
 
             "CRITICAL",
 
@@ -484,7 +511,7 @@ def calculate_dashboard(data):
 
         "overall_risk": overall_risk,
 
-        "overall_score": overall_score,
+        "risk_score": risk_score,
 
         "alerts": alerts,
 

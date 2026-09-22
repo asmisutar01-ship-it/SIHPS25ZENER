@@ -13,14 +13,14 @@
         }
 
         body {
-            background: #f4f6f8;
-            color: #17202a;
+            background: #071a2a;
+            color: #e5edf6;
         }
 
         header {
             height: 72px;
-            background: #ffffff;
-            border-bottom: 1px solid #e1e5e8;
+            background: rgba(8, 18, 31, 0.96);
+            border-bottom: 1px solid rgba(111, 146, 173, 0.35);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -36,23 +36,25 @@
         .brand h1 {
             font-size: 25px;
             letter-spacing: 2px;
+            color: #ecf4ff;
         }
 
         .brand span {
-            color: #7b8794;
+            color: #9bb0c5;
             font-size: 14px;
-            border-left: 1px solid #d9dde1;
+            border-left: 1px solid rgba(155, 176, 197, 0.5);
             padding-left: 14px;
         }
 
         .back-btn {
-            background: #17202a;
-            color: white;
+            background: #0f1d2a;
+            color: #edf5ff;
             padding: 10px 14px;
-            border-radius: 6px;
+            border-radius: 8px;
             text-decoration: none;
             font-size: 12px;
             font-weight: 600;
+            border: 1px solid rgba(143, 176, 208, 0.5);
         }
 
         main {
@@ -66,11 +68,13 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            padding: 10px 0 18px;
         }
 
         .node-title {
             font-size: 28px;
             font-weight: 700;
+            color: #edf5ff;
         }
 
         .status-badge {
@@ -81,25 +85,27 @@
             font-weight: 700;
         }
 
-        .critical { background: #fde8e8; color: #c62828; }
-        .warning { background: #fff3df; color: #a86000; }
-        .normal { background: #e8f5e9; color: #287d3c; }
-        .fault { background: #f5e6e6; color: #7f1d1d; }
-        .unknown { background: #eef2f5; color: #4b5563; }
+        .critical { background: rgba(255, 128, 128, 0.18); color: #ff8c8c; }
+        .warning { background: rgba(255, 193, 7, 0.15); color: #ffd166; }
+        .normal { background: rgba(46, 204, 113, 0.15); color: #7de3a8; }
+        .fault { background: rgba(255, 94, 94, 0.15); color: #ff9d9d; }
+        .unknown { background: rgba(148, 163, 184, 0.15); color: #dfeaf7; }
 
         .section {
-            background: white;
-            border: 1px solid #e2e6ea;
+            background: rgba(14, 25, 38, 0.88);
+            border: 1px solid rgba(111, 146, 173, 0.35);
             border-radius: 10px;
             margin-bottom: 25px;
             overflow: hidden;
+            box-shadow: 0 0 0 1px rgba(15, 29, 42, 0.4);
         }
 
         .section-header {
             padding: 18px 22px;
-            border-bottom: 1px solid #e8ebee;
+            border-bottom: 1px solid rgba(111, 146, 173, 0.25);
             font-size: 16px;
             font-weight: 700;
+            color: #edf5ff;
         }
 
         .card-grid {
@@ -110,15 +116,15 @@
         }
 
         .sensor-card {
-            border: 1px solid #e4e8eb;
+            border: 1px solid rgba(111, 146, 173, 0.35);
             border-radius: 8px;
             padding: 16px;
-            background: #fafbfc;
+            background: rgba(18, 31, 46, 0.9);
         }
 
         .metric-label {
             font-size: 11px;
-            color: #7b8794;
+            color: #9bb0c5;
             margin-bottom: 8px;
             text-transform: uppercase;
         }
@@ -126,11 +132,13 @@
         .metric-value {
             font-size: 18px;
             font-weight: 700;
+            color: #edf5ff;
         }
 
         .chart-container {
             height: 360px;
             padding: 20px;
+            background: rgba(10, 21, 32, 0.7);
         }
 
         canvas {
@@ -139,22 +147,24 @@
         }
 
         .not-found {
-            background: white;
-            border: 1px solid #e2e6ea;
+            background: rgba(14, 25, 38, 0.88);
+            border: 1px solid rgba(111, 146, 173, 0.35);
             border-radius: 10px;
             padding: 40px 25px;
             text-align: center;
             max-width: 800px;
             margin: 60px auto 0;
+            color: #edf5ff;
         }
 
         .not-found h2 {
             margin-bottom: 12px;
             font-size: 26px;
+            color: #edf5ff;
         }
 
         .not-found p {
-            color: #7b8794;
+            color: #9bb0c5;
             margin-bottom: 20px;
         }
 
@@ -397,18 +407,24 @@
                         label: 'Actual Crack Displacement',
                         data: actualData,
                         borderWidth: 2,
+                        borderColor: '#1f77b4',
+                        backgroundColor: '#1f77b4',
+                        pointBackgroundColor: '#1f77b4',
+                        pointBorderColor: '#1f77b4',
                         tension: 0.3,
-                        spanGaps: false,
-                        borderColor: '#1f77b4'
+                        spanGaps: false
                     },
                     {
                         label: 'TimesFM Forecast',
                         data: forecastData,
                         borderWidth: 2,
+                        borderColor: '#d97706',
+                        backgroundColor: '#d97706',
+                        pointBackgroundColor: '#d97706',
+                        pointBorderColor: '#d97706',
                         borderDash: [6, 6],
                         tension: 0.3,
-                        spanGaps: false,
-                        borderColor: '#d97706'
+                        spanGaps: false
                     }
                 ]
             },
