@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | ZENER Structural Health Monitoring</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        :root {
+            --monitor-bg: #0b1118;
+            --monitor-surface: #111b26;
+            --monitor-surface-alt: #162331;
+            --monitor-border: #25384b;
+            --monitor-text: #e4edf5;
+            --monitor-muted: #8ca3b8;
+            --monitor-blue: #38a8ff;
+            --monitor-cyan: #35d6d4;
+        }
+
+        body {
+            background: var(--monitor-bg);
+            color: var(--monitor-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ================= HEADER ================= */
+        header {
+            height: 72px;
+            background: var(--monitor-surface);
+            border-bottom: 1px solid var(--monitor-border);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 35px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand h1 {
+            font-size: 25px;
+            letter-spacing: 2px;
+            color: var(--monitor-text);
+        }
+
+        .brand span {
+            color: var(--monitor-muted);
+            font-size: 14px;
+            border-left: 1px solid var(--monitor-border);
+            padding-left: 14px;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--monitor-cyan);
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            background: var(--monitor-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(53, 214, 212, 0.45);
+        }
+
+        /* ================= MAIN ================= */
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .auth-card {
+            background: var(--monitor-surface);
+            border: 1px solid var(--monitor-border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 440px;
+            padding: 36px 32px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+        }
+
+        .card-header {
+            margin-bottom: 24px;
+        }
+
+        .card-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--monitor-text);
+            margin-bottom: 8px;
+        }
+
+        .card-header p {
+            color: var(--monitor-muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .badge-email {
+            display: inline-block;
+            background: var(--monitor-surface-alt);
+            color: var(--monitor-blue);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            word-break: break-all;
+            border: 1px solid var(--monitor-border);
+        }
+
+        /* ================= ALERTS ================= */
+        .alert {
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            line-height: 1.4;
+        }
+
+        .alert-error {
+            background: rgba(155,43,63,0.2);
+            border: 1px solid rgba(255,139,148,0.35);
+            color: #ff8b94;
+        }
+
+        .alert-success {
+            background: rgba(23,139,139,0.18);
+            border: 1px solid rgba(53,214,212,0.35);
+            color: var(--monitor-cyan);
+        }
+
+        /* ================= FORMS ================= */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--monitor-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 11px 14px;
+            font-size: 14px;
+            border: 1px solid var(--monitor-border);
+            border-radius: 6px;
+            background: var(--monitor-surface-alt);
+            color: var(--monitor-text);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-control::placeholder {
+            color: #4a6278;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--monitor-blue);
+            box-shadow: 0 0 0 3px rgba(56,168,255,0.15);
+        }
+
+        .otp-input {
+            letter-spacing: 8px;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            color: var(--monitor-blue);
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--monitor-blue);
+            color: #fff;
+            border: none;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn-primary:hover {
+            background: #5ab8ff;
+            box-shadow: 0 0 18px rgba(56,168,255,0.25);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.99);
+        }
+
+        .card-footer {
+            margin-top: 22px;
+            text-align: center;
+            border-top: 1px solid var(--monitor-border);
+            padding-top: 18px;
+            font-size: 13px;
+            color: var(--monitor-muted);
+        }
+
+        .card-footer a {
+            color: var(--monitor-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .card-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .resend-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 18px;
+            font-size: 13px;
+        }
+
+        .btn-resend {
+            background: none;
+            border: none;
+            color: var(--monitor-blue);
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            font-size: 13px;
+            text-decoration: underline;
+        }
+
+        .btn-resend:disabled {
+            color: #4a6278;
+            text-decoration: none;
+            cursor: not-allowed;
+        }
+
+        .resend-container a {
+            color: var(--monitor-muted);
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .resend-container a:hover {
+            color: var(--monitor-text);
+        }
+
+        .security-badge {
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #4a6278;
+        }
+
+        @media (max-width: 500px) {
+            header { padding: 0 18px; }
+            header .brand span { display: none; }
+            .auth-card { padding: 28px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <h1>ZENER</h1>
+        <span>Structural Health Monitoring</span>
+    </div>
+    <div class="system-status">
+        <div class="status-dot"></div>
+        SYSTEM ONLINE
+    </div>
+</header>
+
+<main>
+    <div class="auth-card">
+        {% if error %}
+            <div class="alert alert-error">
+                <span>⚠️</span>
+                <span>{{ error }}</span>
+            </div>
+        {% endif %}
+
+        {% if message %}
+            <div class="alert alert-success">
+                <span>✓</span>
+                <span>{{ message }}</span>
+            </div>
+        {% endif %}
+
+        {% if step == 'verify' %}
+            <!-- STEP 2: VERIFY OTP -->
+            <div class="card-header">
+                <h2>Enter Verification Code</h2>
+                <p>A 6-digit OTP code was sent to <span class="badge-email">{{ email }}</span></p>
+            </div>
+
+            <form action="/verify" method="POST">
+                <input type="hidden" name="email" value="{{ email }}">
+
+                <div class="form-group">
+                    <label for="token">6-Digit One-Time Password</label>
+                    <input
+                        type="text"
+                        id="token"
+                        name="token"
+                        class="form-control otp-input"
+                        placeholder="——————"
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <button type="submit" class="btn-primary">Verify &amp; Sign In</button>
+            </form>
+
+            <div class="resend-container">
+                <form action="/resend-otp" method="POST" id="resendForm" style="margin: 0;">
+                    <input type="hidden" name="email" value="{{ email }}">
+                    <button type="submit" id="resendBtn" class="btn-resend" {% if cooldown and cooldown > 0 %}disabled{% endif %}>
+                        Resend Code <span id="cooldownLabel">{% if cooldown and cooldown > 0 %}({{ cooldown }}s){% endif %}</span>
+                    </button>
+                </form>
+                <a href="/login">Change email</a>
+            </div>
+
+            <div class="card-footer">
+                Code expires in <strong style="color: var(--monitor-text);">5 minutes</strong>. Check your inbox or spam folder.
+            </div>
+
+        {% else %}
+            <!-- STEP 1: REQUEST OTP -->
+            <div class="card-header">
+                <h2>Sign In</h2>
+                <p>Enter your authorized email to receive a 6-digit secure authentication code.</p>
+            </div>
+
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label for="email">Work Email Address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-control"
+                        placeholder="engineer@mineops.com"
+                        value="{{ email or '' }}"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <button type="submit" class="btn-primary">Send 6-Digit OTP</button>
+            </form>
+
+            <div class="card-footer">
+                Secure 6-digit OTP verification &middot; ZENER SHM
+            </div>
+        {% endif %}
+
+        <div class="security-badge">
+            🔒 Encrypted Session &middot; SIH PS 25
+        </div>
+    </div>
+</main>
+
+<script>
+    {% if step == 'verify' and cooldown and cooldown > 0 %}
+    (function() {
+        let secondsLeft = {{ cooldown }};
+        const resendBtn = document.getElementById('resendBtn');
+        const cooldownLabel = document.getElementById('cooldownLabel');
+
+        const interval = setInterval(function() {
+            secondsLeft--;
+            if (secondsLeft <= 0) {
+                clearInterval(interval);
+                if (resendBtn) resendBtn.disabled = false;
+                if (cooldownLabel) cooldownLabel.textContent = '';
+            } else {
+                if (cooldownLabel) cooldownLabel.textContent = '(' + secondsLeft + 's)';
+            }
+        }, 1000);
+    })();
+    {% endif %}
+</script>
+
+</body>
+</html>

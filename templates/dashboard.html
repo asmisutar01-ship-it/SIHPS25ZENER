@@ -67,6 +67,25 @@
             border-radius: 50%;
         }
 
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            background: #ffffff;
+            border: 1px solid #d6dce1;
+            border-radius: 6px;
+            color: #d32f2f;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: #ffebee;
+            border-color: #ffcdd2;
+        }
+
         /* ================= MAIN ================= */
 
         main {
@@ -614,9 +633,12 @@
         <span>Structural Health Monitoring</span>
     </div>
 
-    <div class="system-status">
-        <div class="status-dot"></div>
-        SYSTEM ONLINE
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <div class="system-status">
+            <div class="status-dot"></div>
+            SYSTEM ONLINE
+        </div>
+        <a href="/logout" class="logout-btn">Logout</a>
     </div>
 
 </header>
@@ -804,6 +826,12 @@
             <div>
                 <div class="metric-label">SENSOR HEALTH</div>
                 <div class="metric-value" id="summarySensorHealth"></div>
+            </div>
+
+
+            <div>
+                <div class="metric-label">LOAD CELL</div>
+                <div class="metric-value" style="color: var(--monitor-cyan);">NORMAL</div>
             </div>
 
 
@@ -1004,6 +1032,13 @@
                             {% else %}
                                 N/A
                             {% endif %}
+                        </strong>
+
+                        <br>
+
+                        Load Cell:
+                        <strong style="color: var(--monitor-cyan);">
+                            NORMAL
                         </strong>
 
                     </div>

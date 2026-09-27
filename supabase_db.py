@@ -19,7 +19,7 @@ class SensorDatabase:
 
     def __init__(self):
         self.url = os.getenv("SUPABASE_URL")
-        self.key = os.getenv("SUPABASE_KEY")
+        self.key = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_ANON_KEY")
         self.client = None
 
         if self.url and self.key and create_client:
@@ -94,6 +94,43 @@ class SensorDatabase:
             "status": state,
             "state": state,
         }
+
+    def is_user_authorized(self, email):
+        """Check if an email exists in authorized_users and active=True."""
+        if not self.client or not email:
+            return False
+
+        clean_email = str(email).strip().lower()
+        try:
+            response = (
+                self.client.table("authorized_users")
+                .select("id, email, active")
+                .ilike("email", clean_email)
+                .eq("active", True)
+                .execute()
+            )
+            rows = response.data or []
+            return len(rows) > 0
+        except Exception as error:
+            print(f"SUPABASE AUTHORIZATION QUERY FAILED: {error}")
+            return False
+
+    def get_active_authorized_users(self):
+        """Retrieve all active authorized users for critical alerts."""
+        if not self.client:
+            return []
+
+        try:
+            response = (
+                self.client.table("authorized_users")
+                .select("id, email, name, active")
+                .eq("active", True)
+                .execute()
+            )
+            return response.data or []
+        except Exception as error:
+            print(f"SUPABASE ACTIVE USERS QUERY FAILED: {error}")
+            return []
 
 
 sensor_database = SensorDatabase()

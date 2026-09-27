@@ -12,15 +12,28 @@
             font-family: Arial, Helvetica, sans-serif;
         }
 
+        :root {
+            --monitor-bg: #0b1118;
+            --monitor-surface: #111b26;
+            --monitor-surface-alt: #162331;
+            --monitor-border: #25384b;
+            --monitor-text: #e4edf5;
+            --monitor-muted: #8ca3b8;
+            --monitor-blue: #38a8ff;
+            --monitor-cyan: #35d6d4;
+            --monitor-purple: #9b8cff;
+        }
+
         body {
-            background: #071a2a;
-            color: #e5edf6;
+            background: var(--monitor-bg);
+            color: var(--monitor-text);
         }
 
         header {
             height: 72px;
-            background: rgba(8, 18, 31, 0.96);
-            border-bottom: 1px solid rgba(111, 146, 173, 0.35);
+            background: var(--monitor-surface);
+            border-bottom: 1px solid var(--monitor-border);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.22);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -36,25 +49,48 @@
         .brand h1 {
             font-size: 25px;
             letter-spacing: 2px;
-            color: #ecf4ff;
+            color: var(--monitor-text);
         }
 
         .brand span {
-            color: #9bb0c5;
+            color: var(--monitor-muted);
             font-size: 14px;
-            border-left: 1px solid rgba(155, 176, 197, 0.5);
+            border-left: 1px solid var(--monitor-border);
             padding-left: 14px;
         }
 
         .back-btn {
-            background: #0f1d2a;
-            color: #edf5ff;
+            background: var(--monitor-surface-alt);
+            color: var(--monitor-text);
             padding: 10px 14px;
             border-radius: 8px;
             text-decoration: none;
             font-size: 12px;
             font-weight: 600;
-            border: 1px solid rgba(143, 176, 208, 0.5);
+            border: 1px solid var(--monitor-border);
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #1e3348;
+        }
+
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 9px 14px;
+            background: rgba(155,43,63,0.18);
+            border: 1px solid rgba(255,139,148,0.35);
+            border-radius: 8px;
+            color: #ff8b94;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(155,43,63,0.32);
         }
 
         main {
@@ -74,7 +110,7 @@
         .node-title {
             font-size: 28px;
             font-weight: 700;
-            color: #edf5ff;
+            color: var(--monitor-text);
         }
 
         .status-badge {
@@ -85,27 +121,26 @@
             font-weight: 700;
         }
 
-        .critical { background: rgba(255, 128, 128, 0.18); color: #ff8c8c; }
-        .warning { background: rgba(255, 193, 7, 0.15); color: #ffd166; }
-        .normal { background: rgba(46, 204, 113, 0.15); color: #7de3a8; }
-        .fault { background: rgba(255, 94, 94, 0.15); color: #ff9d9d; }
-        .unknown { background: rgba(148, 163, 184, 0.15); color: #dfeaf7; }
+        .critical { background: rgba(155,43,63,0.24); color: #ff8b94; }
+        .warning  { background: rgba(164,95,28,0.24);  color: #ffc078; }
+        .normal   { background: rgba(23,139,139,0.2);  color: #70e5e0; }
+        .fault    { background: rgba(255,94,94,0.15);   color: #ff9d9d; }
+        .unknown  { background: rgba(148,163,184,0.15); color: var(--monitor-text); }
 
         .section {
-            background: rgba(14, 25, 38, 0.88);
-            border: 1px solid rgba(111, 146, 173, 0.35);
+            background: var(--monitor-surface);
+            border: 1px solid var(--monitor-border);
             border-radius: 10px;
             margin-bottom: 25px;
             overflow: hidden;
-            box-shadow: 0 0 0 1px rgba(15, 29, 42, 0.4);
         }
 
         .section-header {
             padding: 18px 22px;
-            border-bottom: 1px solid rgba(111, 146, 173, 0.25);
+            border-bottom: 1px solid var(--monitor-border);
             font-size: 16px;
             font-weight: 700;
-            color: #edf5ff;
+            color: var(--monitor-text);
         }
 
         .card-grid {
@@ -116,15 +151,15 @@
         }
 
         .sensor-card {
-            border: 1px solid rgba(111, 146, 173, 0.35);
+            border: 1px solid var(--monitor-border);
             border-radius: 8px;
             padding: 16px;
-            background: rgba(18, 31, 46, 0.9);
+            background: var(--monitor-surface-alt);
         }
 
         .metric-label {
             font-size: 11px;
-            color: #9bb0c5;
+            color: var(--monitor-muted);
             margin-bottom: 8px;
             text-transform: uppercase;
         }
@@ -132,13 +167,16 @@
         .metric-value {
             font-size: 18px;
             font-weight: 700;
-            color: #edf5ff;
+            color: var(--monitor-text);
         }
+
+        .metric-value.val-normal { color: var(--monitor-cyan); }
+        .metric-value.val-blue   { color: var(--monitor-blue); }
 
         .chart-container {
             height: 360px;
             padding: 20px;
-            background: rgba(10, 21, 32, 0.7);
+            background: rgba(10,21,32,0.7);
         }
 
         canvas {
@@ -147,51 +185,39 @@
         }
 
         .not-found {
-            background: rgba(14, 25, 38, 0.88);
-            border: 1px solid rgba(111, 146, 173, 0.35);
+            background: var(--monitor-surface);
+            border: 1px solid var(--monitor-border);
             border-radius: 10px;
             padding: 40px 25px;
             text-align: center;
             max-width: 800px;
             margin: 60px auto 0;
-            color: #edf5ff;
+            color: var(--monitor-text);
         }
 
         .not-found h2 {
             margin-bottom: 12px;
             font-size: 26px;
-            color: #edf5ff;
+            color: var(--monitor-text);
         }
 
         .not-found p {
-            color: #9bb0c5;
+            color: var(--monitor-muted);
             margin-bottom: 20px;
         }
 
         @media (max-width: 900px) {
-            .card-grid {
-                grid-template-columns: repeat(2, minmax(180px, 1fr));
-            }
+            .card-grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
         }
 
         @media (max-width: 600px) {
-            .card-grid {
-                grid-template-columns: 1fr;
-            }
-
-            header {
-                padding: 0 18px;
-            }
-
-            header .brand span {
-                display: none;
-            }
-
-            main {
-                padding: 20px 15px;
-            }
+            .card-grid { grid-template-columns: 1fr; }
+            header { padding: 0 18px; }
+            header .brand span { display: none; }
+            main { padding: 20px 15px; }
         }
     </style>
+
 </head>
 <body>
 
@@ -201,7 +227,10 @@
         <span>Structural Health Monitoring</span>
     </div>
 
-    <a class="back-btn" href="{{ back_to_dashboard }}">← Back to Dashboard</a>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <a class="back-btn" href="{{ back_to_dashboard }}">← Back to Dashboard</a>
+        <a href="/logout" class="logout-btn">Logout</a>
+    </div>
 </header>
 
 <main>
@@ -352,6 +381,11 @@
                 <div class="metric-value">
                     {{ risk.sensor_health }}
                 </div>
+            </div>
+
+            <div class="sensor-card">
+                <div class="metric-label">Load Cell</div>
+                <div class="metric-value val-normal">NORMAL</div>
             </div>
         </div>
     </div>
