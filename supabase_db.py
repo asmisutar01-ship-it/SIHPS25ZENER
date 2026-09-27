@@ -60,21 +60,34 @@ class SensorDatabase:
             print(f"SUPABASE INSERT FAILED: {error}")
             return False
 
-    def read_readings(self):
-        """Read all historical readings in timestamp order for TimesFM/dashboard."""
+    def read_readings(self, max_records=5000):
+        """Read historical readings in timestamp order for TimesFM/dashboard, fetching the most recent records first."""
         if not self.client:
             return None
 
         try:
-            response = (
-                self.client.table("sensor_readings")
-                .select("*")
-                .order("timestamp")
-                .execute()
-            )
-            rows = response.data or []
-            print(f"DATABASE READ SUCCESS: {len(rows)} readings")
-            return [self._to_sensor_reading(row) for row in rows]
+            all_rows = []
+            page_size = 1000
+            offset = 0
+            while len(all_rows) < max_records:
+                response = (
+                    self.client.table("sensor_readings")
+                    .select("*")
+                    .order("timestamp", desc=True)
+                    .range(offset, offset + page_size - 1)
+                    .execute()
+                )
+                rows = response.data or []
+                if not rows:
+                    break
+                all_rows.extend(rows)
+                offset += len(rows)
+                if len(rows) < page_size:
+                    break
+
+            all_rows.reverse()
+            print(f"DATABASE READ SUCCESS: {len(all_rows)} readings")
+            return [self._to_sensor_reading(row) for row in all_rows]
         except Exception as error:
             print(f"SUPABASE READ FAILED: {error}")
             return None

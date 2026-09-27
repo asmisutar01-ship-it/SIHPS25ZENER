@@ -24,36 +24,58 @@ def build_alert_details(node):
     risk = node.get("risk", "NORMAL")
     score = node.get("score")
     current_crack = node.get("current_crack")
+    if current_crack is None:
+        current_crack = node.get("crack_disp_mm")
     forecast_increase = node.get("forecast_increase")
+    tilt_x = node.get("tilt_x")
+    if tilt_x is None:
+        tilt_x = node.get("tilt_x_deg")
+    tilt_y = node.get("tilt_y")
+    if tilt_y is None:
+        tilt_y = node.get("tilt_y_deg")
     tilt_magnitude = node.get("tilt_magnitude")
     vibration = node.get("vibration")
+    if vibration is None:
+        vibration = node.get("vibration_g")
     timestamp = node.get("timestamp")
 
     reasons = []
 
+    # ESP32: crack_disp_mm > 2.0 -> CRITICAL
     if current_crack is not None:
-        if current_crack >= 10:
-            reasons.append("Crack displacement is high")
-        elif current_crack >= 5:
-            reasons.append("Crack displacement is elevated")
+        if current_crack > 2.0:
+            reasons.append(f"Crack displacement ({current_crack:.2f} mm) exceeds critical limit (>2.0 mm)")
+        elif current_crack >= 1.0:
+            reasons.append(f"Crack displacement ({current_crack:.2f} mm) is elevated")
 
-    if forecast_increase is not None:
-        if forecast_increase >= 3:
-            reasons.append("Forecast indicates further increase")
-        elif forecast_increase >= 1:
-            reasons.append("Forecast shows moderate increase")
+    # ESP32: abs(tilt_x_deg) > 25.0 -> CRITICAL; > 10.0 -> WARNING
+    if tilt_x is not None:
+        if abs(tilt_x) > 25.0:
+            reasons.append(f"Tilt X ({tilt_x:.1f}°) exceeds critical limit (±25.0°)")
+        elif abs(tilt_x) > 10.0:
+            reasons.append(f"Tilt X ({tilt_x:.1f}°) exceeds warning threshold (±10.0°)")
 
-    if tilt_magnitude is not None:
-        if tilt_magnitude >= 2:
-            reasons.append("Tilt magnitude exceeds threshold")
-        elif tilt_magnitude >= 1:
-            reasons.append("Tilt magnitude is elevated")
+    # ESP32: abs(tilt_y_deg) > 25.0 -> CRITICAL; > 10.0 -> WARNING
+    if tilt_y is not None:
+        if abs(tilt_y) > 25.0:
+            reasons.append(f"Tilt Y ({tilt_y:.1f}°) exceeds critical limit (±25.0°)")
+        elif abs(tilt_y) > 10.0:
+            reasons.append(f"Tilt Y ({tilt_y:.1f}°) exceeds warning threshold (±10.0°)")
 
+    # Fallback to tilt_magnitude if individual axes are unavailable
+    if (tilt_x is None and tilt_y is None) and tilt_magnitude is not None:
+        if tilt_magnitude > 25.0:
+            reasons.append(f"Tilt magnitude ({tilt_magnitude:.1f}°) exceeds critical limit (>25.0°)")
+        elif tilt_magnitude > 10.0:
+            reasons.append(f"Tilt magnitude ({tilt_magnitude:.1f}°) exceeds warning threshold (>10.0°)")
+
+    # ESP32: vibration_g > 0.10 -> WARNING
     if vibration is not None:
-        if vibration >= 1.5:
-            reasons.append("Vibration is high")
-        elif vibration >= 0.5:
-            reasons.append("Vibration is elevated")
+        if vibration > 0.10:
+            reasons.append(f"Vibration ({vibration:.2f} g) exceeds warning threshold (>0.10 g)")
+
+    if forecast_increase is not None and forecast_increase >= 1.0:
+        reasons.append("Forecast indicates further crack expansion")
 
     if not reasons:
         reasons.append("Sensor readings indicate abnormal trend")
@@ -81,70 +103,42 @@ def calculate_risk(
 ):
 
     # Maximum predicted crack displacement
-    max_forecast = float(np.max(forecast))
+    max_forecast = float(np.max(forecast)) if len(forecast) > 0 else float(current_crack)
 
     # Predicted increase in crack displacement
     forecast_increase = max_forecast - current_crack
 
-    # Tilt magnitude in degrees
-    tilt_magnitude = np.sqrt(tilt_x ** 2 + tilt_y ** 2)
+    # Tilt magnitude in degrees (retained for display/metrics)
+    tilt_magnitude = float(np.sqrt(tilt_x ** 2 + tilt_y ** 2))
 
-    score = 0
+    # --------------------------------------------------------
+    # STATUS CLASSIFICATION (EXACT ESP32 SENSOR-NODE LOGIC)
+    # --------------------------------------------------------
+    # CRITICAL (STATE_ALERT):
+    #   crack_disp_mm > 2.0 OR abs(tilt_x_deg) > 25.0 OR abs(tilt_y_deg) > 25.0
+    # WARNING (STATE_WARNING):
+    #   vibration_g > 0.10 OR abs(tilt_x_deg) > 10.0 OR abs(tilt_y_deg) > 10.0
+    # NORMAL (STATE_NORMAL):
+    #   Everything else
+    # --------------------------------------------------------
 
-    # --------------------------
-    # CURRENT CRACK
-    # --------------------------
-
-    if current_crack < 5:
-        score += 0
-    elif current_crack < 10:
-        score += 1
-    else:
-        score += 2
-
-    # --------------------------
-    # FORECAST INCREASE
-    # --------------------------
-
-    if forecast_increase < 1:
-        score += 0
-    elif forecast_increase < 3:
-        score += 1
-    else:
-        score += 2
-
-    # --------------------------
-    # TILT MAGNITUDE
-    # --------------------------
-
-    if tilt_magnitude < 1:
-        score += 0
-    elif tilt_magnitude < 2:
-        score += 1
-    else:
-        score += 2
-
-    # --------------------------
-    # VIBRATION
-    # --------------------------
-
-    if vibration < 0.5:
-        score += 0
-    elif vibration < 1.5:
-        score += 1
-    else:
-        score += 2
-
-    # --------------------------
-    # STRUCTURAL RISK
-    # --------------------------
-
-    if score <= 2:
-        risk = "NORMAL"
-    elif score <= 5:
-        risk = "WARNING"
-    else:
+    if (
+        current_crack > 2.0
+        or abs(tilt_x) > 25.0
+        or abs(tilt_y) > 25.0
+    ):
         risk = "CRITICAL"
+        score = 8
+    elif (
+        vibration > 0.10
+        or abs(tilt_x) > 10.0
+        or abs(tilt_y) > 10.0
+    ):
+        risk = "WARNING"
+        score = 4
+    else:
+        risk = "NORMAL"
+        score = 1
 
     # --------------------------
     # SENSOR HEALTH
@@ -164,6 +158,8 @@ def calculate_risk(
         "max_forecast": max_forecast,
         "forecast_increase": forecast_increase,
         "tilt_magnitude": float(tilt_magnitude),
+        "tilt_x": tilt_x,
+        "tilt_y": tilt_y,
         "vibration": vibration,
         "battery": battery,
         "sensor_health": sensor_health

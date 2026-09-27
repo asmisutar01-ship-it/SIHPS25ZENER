@@ -113,6 +113,36 @@ class MQTTIngestion:
         if tilt_y is None:
             tilt_y = self._first_value(tilt, "y", "tilt_y_deg")
 
+        raw_status = (
+            self._first_value(packet, "status", "state", "alertStatus", "alert_status", "alert", "alert_state")
+            or self._first_value(metrics, "status", "state", "alertStatus", "alert_status", "alert", "alert_state")
+        )
+        raw_status_str = str(raw_status).strip().upper() if raw_status is not None else ""
+
+        if raw_status_str in {"STATE_ALERT", "ALERT", "CRITICAL", "2"}:
+            status = "CRITICAL"
+        elif raw_status_str in {"STATE_WARNING", "WARNING", "1"}:
+            status = "WARNING"
+        elif raw_status_str in {"STATE_NORMAL", "NORMAL", "HEALTHY", "0"}:
+            status = "NORMAL"
+        elif raw_status_str in {"HARDWARE_FAULT", "HARDWARE_WARNING", "FAULT"}:
+            status = "HARDWARE_FAULT"
+        else:
+            # Fallback to ESP32 threshold logic directly from values
+            c_disp = self._first_value(metrics, "crack_disp_mm", "crack_displacement", "crack")
+            c_val = float(c_disp) if c_disp is not None else 0.0
+            tx = float(tilt_x) if tilt_x is not None else 0.0
+            ty = float(tilt_y) if tilt_y is not None else 0.0
+            vib = self._first_value(metrics, "vibration_g", "vibration")
+            vib_val = float(vib) if vib is not None else 0.0
+
+            if c_val > 2.0 or abs(tx) > 25.0 or abs(ty) > 25.0:
+                status = "CRITICAL"
+            elif vib_val > 0.10 or abs(tx) > 10.0 or abs(ty) > 10.0:
+                status = "WARNING"
+            else:
+                status = "NORMAL"
+
         return {
             "timestamp": timestamp,
             "node_id": str(node_id),
@@ -123,8 +153,8 @@ class MQTTIngestion:
             "crack_disp_mm": self._first_value(metrics, "crack_disp_mm", "crack_displacement", "crack"),
             "temperature_c": self._first_value(metrics, "temperature_c", "temp_c", "temp", "temperature"),
             "battery_v": self._first_value(metrics, "battery_v", "battery"),
-            "status": packet.get("state") or metrics.get("state") or "UNKNOWN",
-            "state": packet.get("state") or metrics.get("state") or "UNKNOWN",
+            "status": status,
+            "state": status,
         }
 
     def _detect_anomaly(self, reading):

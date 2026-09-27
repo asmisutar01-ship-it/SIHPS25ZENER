@@ -55,27 +55,41 @@ def numeric_value(value, default=None):
         return default
 
 
+def normalize_status_label(value):
+    if value is None:
+        return ""
+    val = str(value).strip().upper()
+    if val in {"CRITICAL", "ALERT", "STATE_ALERT", "2"}:
+        return "CRITICAL"
+    if val in {"WARNING", "STATE_WARNING", "1"}:
+        return "WARNING"
+    if val in {"NORMAL", "HEALTHY", "STATE_NORMAL", "0"}:
+        return "NORMAL"
+    if val in {"HARDWARE_FAULT", "HARDWARE_WARNING", "FAULT"}:
+        return "HARDWARE_FAULT"
+    return val
+
+
 def effective_dashboard_status(sensor_status, risk_result):
+    s_status = normalize_status_label(sensor_status)
+    r_status = normalize_status_label(risk_result.get("risk") if risk_result else None)
 
-    status = str(sensor_status).strip().upper() if sensor_status is not None else ""
+    priority = {
+        "CRITICAL": 4,
+        "WARNING": 3,
+        "HARDWARE_FAULT": 2,
+        "NORMAL": 1,
+        "UNKNOWN": 0,
+        "": 0
+    }
 
-    if status == "HARDWARE_FAULT":
-        return "HARDWARE_FAULT"
+    p_sensor = priority.get(s_status, 0)
+    p_risk = priority.get(r_status, 0)
 
-    if status in {"CRITICAL", "WARNING", "NORMAL"}:
-        return status
+    if p_sensor == 0 and p_risk == 0:
+        return s_status or r_status or "UNKNOWN"
 
-    score = numeric_value(risk_result.get("score"))
-    if score is not None and np.isfinite(score):
-        return risk_result.get("risk") or "UNKNOWN"
-
-    if status:
-        return status
-
-    if risk_result.get("risk") == "HARDWARE_FAULT":
-        return "HARDWARE_FAULT"
-
-    return "UNKNOWN"
+    return s_status if p_sensor >= p_risk else r_status
 
 
 # ============================================================
@@ -88,13 +102,17 @@ def get_latest_readings(data):
 
     for reading in data:
 
-        node_id = reading["node_id"]
+        node_id = reading.get("node_id")
+        if not node_id:
+            continue
 
-        if (
-            node_id not in latest
-            or reading["timestamp"] > latest[node_id]["timestamp"]
-        ):
+        if node_id not in latest:
             latest[node_id] = reading
+        else:
+            ts_new = pd.to_datetime(reading.get("timestamp"), errors="coerce", utc=True)
+            ts_curr = pd.to_datetime(latest[node_id].get("timestamp"), errors="coerce", utc=True)
+            if pd.isna(ts_curr) or (not pd.isna(ts_new) and ts_new >= ts_curr):
+                latest[node_id] = reading
 
     return latest
 
@@ -174,50 +192,18 @@ def calculate_node_risk(df, node):
 
 
     # --------------------------------------------------------
-    # Forecast unavailable
-    # --------------------------------------------------------
-
-    if forecast is None:
-
-        result = {
-
-            "risk": "UNKNOWN",
-
-            "score": None,
-
-            "current_crack": float(current_crack),
-
-            "max_forecast": None,
-
-            "forecast_increase": None,
-
-            "tilt_magnitude": (
-                tilt_x ** 2 +
-                tilt_y ** 2
-            ) ** 0.5,
-
-            "vibration": vibration,
-
-            "battery": battery,
-
-            "sensor_health": "UNKNOWN"
-
-        }
-
-        print(f"AI/RISK RESULT: {node} -> {result['risk']}")
-        return result
-
-
-    # --------------------------------------------------------
     # RISK ENGINE
     # --------------------------------------------------------
 
+    forecast_values = (
+        np.asarray(forecast, dtype=float)
+        if forecast is not None and len(forecast) > 0
+        else np.asarray([float(current_crack)], dtype=float)
+    )
+
     result = calculate_risk(
         float(current_crack),
-        np.asarray(
-            forecast,
-            dtype=float
-        ),
+        forecast_values,
         float(tilt_x),
         float(tilt_y),
         float(vibration),
@@ -226,11 +212,15 @@ def calculate_node_risk(df, node):
 
     result["battery"] = battery
 
-    # Store TimesFM forecast so the dashboard can use it
-    result["forecast"] = [
-        float(value)
-        for value in forecast
-    ]
+    if forecast is not None:
+        result["forecast"] = [
+            float(value)
+            for value in forecast
+        ]
+    else:
+        result["forecast"] = []
+        result["max_forecast"] = float(current_crack)
+        result["forecast_increase"] = 0.0
 
     print(f"AI/RISK RESULT: {node} -> {result['risk']}")
 
